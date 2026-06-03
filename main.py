@@ -12,6 +12,7 @@ Pipeline per row:
 
 import csv
 import os
+import time
 from datetime import datetime
 
 from dotenv import load_dotenv
@@ -43,7 +44,7 @@ CLASSIFICATION_COLS = ["suggested_client_type", "type_reasoning"]
 # Appended after all CSV columns
 ANALYSIS_COLS = [
     "people", "product", "place", "price",
-    "promotion", "opportunity_level", "next_action",
+    "promotion", "opportunity_level", "next_action", "web_intel",
 ]
 
 # All analysis-derived keys — used to exclude them from the csv_cols list
@@ -64,6 +65,11 @@ def main():
         analysis  = analyzer.analyze(row, site_data["text"])
 
         results.append({**row, **analysis, "_fetch_error": site_data["error"] or ""})
+
+        # Pause between calls — web search uses ~8K input tokens per company;
+        # staying under the 30K/min rate limit requires spacing requests out.
+        if i < len(rows):
+            time.sleep(20)
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     saved_path = _write_excel(results)
