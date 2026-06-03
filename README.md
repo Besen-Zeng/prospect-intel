@@ -71,10 +71,12 @@ Output appears at `output/report.xlsx`.
 
 ---
 
-### 5P Analysis fields (Claude output)
+### Output fields (Claude analysis)
 
 | Field | Description |
 |---|---|
+| `suggested_client_type` | Auto-inferred B/C classification from website content (see rules below) |
+| `type_reasoning` | One-sentence explanation of why Claude chose that classification |
 | `people` | Decision-maker profile and what matters to them |
 | `product` | What they sell / their product focus |
 | `place` | Market position, geography, distribution |
@@ -82,6 +84,21 @@ Output appears at `output/report.xlsx`.
 | `promotion` | How they market (e-commerce, trade shows, etc.) |
 | `opportunity_level` | High / Mid / Low fit rating |
 | `next_action` | Single most impactful next BD step |
+
+### Auto client-type classification
+
+Claude infers the client type from website content using these rules:
+
+| Code | Meaning |
+|---|---|
+| `B1` | Manufactures its own products |
+| `B2` | Large distributor or multinational group (multi-country, large SKU range, many sub-brands) |
+| `B3` | Local or single-category distributor (limited region or limited product scope) |
+| `C1` | Chain store (vertical specialty retailer or mass KA like Costco) |
+| `C2` | Pure e-commerce (online only, no physical stores) |
+| `C3` | Has a few own physical retail stores |
+
+Combined types are supported (e.g. `B3+C3`). If you leave `client_type` blank in the CSV, the auto-inferred value fills the cell automatically (shown in blue in Excel).
 
 ---
 

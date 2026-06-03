@@ -12,6 +12,7 @@ Pipeline per row:
 
 import csv
 import os
+from datetime import datetime
 
 from dotenv import load_dotenv
 from openpyxl import Workbook
@@ -33,10 +34,20 @@ FILL_MID  = PatternFill("solid", fgColor="FFEB9C")   # yellow
 FILL_LOW  = PatternFill("solid", fgColor="FFC7CE")   # red
 FILL_MAP  = {"High": FILL_HIGH, "Mid": FILL_MID, "Low": FILL_LOW}
 
+# Light blue: client_type cell was blank so auto-inferred value is shown
+FILL_AUTO = PatternFill("solid", fgColor="DDEBF7")
+
+# Inserted right after the "client_type" CSV column in the Excel output
+CLASSIFICATION_COLS = ["suggested_client_type", "type_reasoning"]
+
+# Appended after all CSV columns
 ANALYSIS_COLS = [
     "people", "product", "place", "price",
     "promotion", "opportunity_level", "next_action",
 ]
+
+# All analysis-derived keys — used to exclude them from the csv_cols list
+ALL_ANALYSIS = set(CLASSIFICATION_COLS + ANALYSIS_COLS)
 
 
 def main():
@@ -55,10 +66,10 @@ def main():
         results.append({**row, **analysis, "_fetch_error": site_data["error"] or ""})
 
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    _write_excel(results)
+    saved_path = _write_excel(results)
 
     print(f"\n{'─' * 45}")
-    print(f"Done! Report saved to {OUTPUT_FILE}\n")
+    print(f"Done! Report saved to {saved_path}\n")
 
 
 def _read_csv(path: str) -> list[dict]:
@@ -71,9 +82,10 @@ def _write_excel(results: list[dict]) -> None:
     ws = wb.active
     ws.title = "Prospect Intelligence"
 
-    # Build header list: original CSV cols + analysis cols (skip internal _keys)
-    csv_cols = [k for k in results[0].keys() if not k.startswith("_") and k not in ANALYSIS_COLS]
-    headers  = csv_cols + ANALYSIS_COLS
+    # Build header list: CSV cols, then classification cols injected after client_type, then 5P cols
+    csv_cols = [k for k in results[0].keys() if not k.startswith("_") and k not in ALL_ANALYSIS]
+    ct_pos   = csv_cols.index("client_type") + 1 if "client_type" in csv_cols else len(csv_cols)
+    headers  = csv_cols[:ct_pos] + CLASSIFICATION_COLS + csv_cols[ct_pos:] + ANALYSIS_COLS
 
     # Header row — bold, grey background
     header_fill = PatternFill("solid", fgColor="D9D9D9")
@@ -91,8 +103,13 @@ def _write_excel(results: list[dict]) -> None:
             cell = ws.cell(row=row_idx, column=col_idx, value=row.get(key, ""))
             cell.alignment = Alignment(wrap_text=True, vertical="top")
 
+            # If client_type was left blank, display the auto-inferred value (blue tint)
+            if key == "client_type" and not row.get("client_type", "").strip():
+                cell.value = row.get("suggested_client_type", "")
+                cell.fill  = FILL_AUTO
+
             # Colour the opportunity_level cell
-            if col_idx == opp_col_idx:
+            elif col_idx == opp_col_idx:
                 level = row.get("opportunity_level", "")
                 if level in FILL_MAP:
                     cell.fill = FILL_MAP[level]
@@ -109,7 +126,16 @@ def _write_excel(results: list[dict]) -> None:
     # Freeze header row
     ws.freeze_panes = "A2"
 
-    wb.save(OUTPUT_FILE)
+    path = OUTPUT_FILE
+    try:
+        wb.save(path)
+    except PermissionError:
+        # File is open in Excel — save a timestamped copy instead
+        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        path  = os.path.join(OUTPUT_DIR, f"report_{stamp}.xlsx")
+        wb.save(path)
+        print(f"  NOTE: report.xlsx was open — saved as {os.path.basename(path)} instead")
+    return path
 
 
 if __name__ == "__main__":
