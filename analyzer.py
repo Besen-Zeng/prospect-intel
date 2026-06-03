@@ -9,6 +9,7 @@ Returns a dict with keys:
 
 import json
 import os
+from pathlib import Path
 
 import anthropic
 from dotenv import load_dotenv
@@ -17,17 +18,19 @@ load_dotenv(override=True)
 
 MODEL = "claude-sonnet-4-6"
 
-SYSTEM_PROMPT = """You are a B2B sales intelligence analyst for a smart pool robot manufacturer.
-Analyze the given prospect and return ONLY a valid JSON object — no markdown, no explanation, no extra text.
+# Load classification rules from the editable text file next to this module.
+# Edit classification_rules.txt to change behaviour — no code change needed.
+_RULES_PATH = Path(__file__).parent / "classification_rules.txt"
+try:
+    _CLASSIFICATION_RULES = _RULES_PATH.read_text(encoding="utf-8").strip()
+except FileNotFoundError:
+    _CLASSIFICATION_RULES = "(classification_rules.txt not found — use best judgement)"
 
-Client type classification rules (use these exactly):
-  B1 — the company manufactures its own products
-  B2 — large distributor or multinational group (multiple countries, large SKU range, many sub-brands)
-  B3 — local or single-category distributor (limited region or limited product scope)
-  C1 — chain store (vertical specialty retailer or mass KA such as Costco)
-  C2 — pure e-commerce (sells only online, no physical stores)
-  C3 — has a few own physical retail stores
-Combined types are allowed, e.g. "B1+B2" or "B3+C3". If unclear, return the single most likely type.
+SYSTEM_PROMPT = (
+    "You are a B2B sales intelligence analyst for a smart pool robot manufacturer.\n"
+    "Analyze the given prospect and return ONLY a valid JSON object — no markdown, no explanation, no extra text.\n\n"
+    + _CLASSIFICATION_RULES
+    + """
 
 The JSON must have exactly these keys:
 {
@@ -41,6 +44,7 @@ The JSON must have exactly these keys:
   "suggested_client_type": "...",       // inferred type code(s) from the classification rules above
   "type_reasoning":        "..."        // one sentence explaining the classification based on website evidence
 }"""
+)
 
 USER_TEMPLATE = """Analyze this prospect for our smart pool robot company.
 

@@ -1,0 +1,11 @@
+Client type classification rules (use these exactly):
+
+  B1 — the company manufactures its own products
+  B2 — large distributor or multinational group (multiple countries, large SKU range, many sub-brands)
+  B3 — local or single-category distributor (limited region or limited product scope)
+  C1 — chain store (vertical specialty retailer or mass KA such as Costco)
+  C2 — pure e-commerce (sells only online, no physical stores)
+  C3 — has a few own physical retail stores
+
+Combined types are allowed, e.g. "B1+B2" or "B3+C3".
+If the type is unclear from the website, return the single most likely type.
