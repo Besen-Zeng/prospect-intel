@@ -27,9 +27,16 @@ output/report.xlsx   ← colour-coded Excel report (Green = High opportunity)
 
 ### Sample output
 
+Real output from a pipeline run against 4 anonymized prospects:
+
 | Company | Country | Opportunity | People | Next Action |
 |---|---|---|---|---|
-| *(generated after running — see below)* | | | | |
+| SoDramar | Brazil 🇧🇷 | **High** | Douglas — engineer & quote authority; responds to AI/automation demos | Schedule technical demo focused on smart mapping & AI navigation |
+| Esparindo | Indonesia 🇮🇩 | **High** | Husni — German-educated engineer; high QC standards; phasing out Dolphin | Send technically detailed brief emphasizing European engineering standards |
+| Fahrenheit Wellness | India 🇮🇳 | **High** | Harsh — owner; premium-bullish; wants sample + quote | Send premium sample kit + tailored quote immediately |
+| INNPRO | Poland 🇵🇱 | **High** | Lukasz — PM; enthusiastic on iGarden ecosystem; plans dedicated team | Schedule partnership scoping call to position robot as iGarden extension |
+
+*Full report includes 5P fields (people / product / place / price / promotion) + colour-coded opportunity cells in Excel.*
 
 ---
 
